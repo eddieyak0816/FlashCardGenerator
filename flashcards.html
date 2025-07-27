@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
+        <h1 class="text-2xl font-bold mb-6 text-center">Flashcard Generator</h1>
+        
+        <div id="inputSection">
+            <div class="mb-4">
+                <label class1="block text-gray-700 text-sm font-bold mb-2" for="inputType">
+                    Input Type
+                </label>
+                <select id="inputType" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="url">YouTube URL</option>
+                    <option value="text">Custom Text</option>
+                </select>
+            </div>
+
+            <div id="urlInput" class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="youtubeUrl">
+                    YouTube URL
+                </label>
+                <input type="text" id="youtubeUrl" placeholder="Enter YouTube URL" 
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+
+            <div id="textInput" class="mb-4 hidden">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="customText">
+                    Custom Text
+                </label>
+                <textarea id="customText" rows="4" placeholder="Enter your custom text"
+                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+            </div>
+
+            <button id="generateBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                Generate Flashcards
+            </button>
+        </div>
+
+        <div id="editSection" class="hidden">
+            <h2 class="text-xl font-bold mb-4">Edit Flashcards</h2>
+            <div id="flashcardsList" class="space-y-4 mb-4"></div>
+            
+            <div class="flex justify-between">
+                <button id="addFlashcardBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Add Flashcard
+                </button>
+                <div>
+                    <label class="inline-block mr-2 text-gray-700 text-sm font-bold">Export Format:</label>
+                    <select id="exportFormat" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="sheets">Google Sheets</option>
+                        <option value="anki">Anki</option>
+                        <option value="both">Both</option>
+                    </select>
+                    <button id="exportBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ml-2">
+                        Export
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultMessage" class="mt-4 text-center"></div>
+    </div>
+
+    <script>
+        let generatedFlashcards = [];
+
+        document.getElementById('inputType').addEventListener('change', function() {
+            const urlInput = document.getElementById('urlInput');
+            const textInput = document.getElementById('textInput');
+            
+            if (this.value === 'url') {
+                urlInput.classList.remove('hidden');
+                textInput.classList.add('hidden');
+            } else {
+                urlInput.classList.add('hidden');
+                textInput.classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const inputType = document.getElementById('inputType').value;
+            const resultMessage = document.getElementById('resultMessage');
+            
+            let content = '';
+            if (inputType === 'url') {
+                content = document.getElementById('youtubeUrl').value;
+            } else {
+                content = document.getElementById('customText').value;
+            }
+
+            // Validate input
+            if (!content.trim()) {
+                resultMessage.innerHTML = `<p class="text-red-500">Please enter a YouTube URL or text content.</p>`;
+                return;
+            }
+
+            // Clear previous messages
+            resultMessage.innerHTML = '<p class="text-blue-500">Generating flashcards...</p>';
+            
+            // Disable button and show loading
+            this.disabled = true;
+            this.innerHTML = 'Generating...';
+            
+            fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: inputType,
+                    content: content
+                })
+            })
+            .then(response => {
+                // Log the raw response for debugging
+                console.log('Raw response:', response);
+                return response.json();
+            })
+            .then(data => {
+                // Re-enable button
+                this.disabled = false;
+                this.innerHTML = 'Generate Flashcards';
+
+                // Log the parsed data for debugging
+                console.log('Parsed data:', data);
+
+                if (data.error) {
+                    resultMessage.innerHTML = `<p class="text-red-500">${data.error}</p>`;
+                } else {
+                    // Ensure flashcards exist and are an array
+                    if (data.flashcards && Array.isArray(data.flashcards)) {
+                        // Switch to edit view
+                        document.getElementById('inputSection').classList.add('hidden');
+                        const editSection = document.getElementById('editSection');
+                        editSection.classList.remove('hidden');
+
+                        // Populate flashcards
+                        generatedFlashcards = data.flashcards;
+                        renderFlashcards();
+                        
+                        // Clear result message
+                        resultMessage.innerHTML = '';
+                    } else {
+                        // Handle case where flashcards are not in expected format
+                        resultMessage.innerHTML = `<p class="text-red-500">Unexpected response format. No flashcards found.</p>`;
+                        console.error('Unexpected data structure:', data);
+                    }
+                }
+            })
+            .catch(error => {
+                // Re-enable button
+                this.disabled = false;
+                this.innerHTML = 'Generate Flashcards';
+
+                // Log the full error for debugging
+                console.error('Full error:', error);
+
+                resultMessage.innerHTML = `<p class="text-red-500">An error occurred: ${error}</p>`;
+            });
+        });
+
+        function renderFlashcards() {
+            const flashcardsList = document.getElementById('flashcardsList');
+            flashcardsList.innerHTML = '';
+
+            generatedFlashcards.forEach((flashcard, index) => {
+                const flashcardDiv = document.createElement('div');
+                flashcardDiv.classList.add('bg-gray-100', 'p-4', 'rounded', 'flex', 'space-x-4');
+                
+                // Ensure flashcard is an array with two elements
+                const front = flashcard[0] || 'No front text';
+                const back = flashcard[1] || 'No back text';
+
+                flashcardDiv.innerHTML = `
+                    <div class="flex-grow">
+                        <label class="block text-sm font-bold mb-1">Front</label>
+                        <input type="text" value="${front}" 
+                               class="front-input shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="flex-grow">
+                        <label class="block text-sm font-bold mb-1">Back</label>
+                        <input type="text" value="${back}" 
+                               class="back-input shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="flex items-end">
+                        <button class="delete-flashcard bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                            Delete
+                        </button>
+                    </div>
+                `;
+
+                // Add event listeners for editing
+                const frontInput = flashcardDiv.querySelector('.front-input');
+                const backInput = flashcardDiv.querySelector('.back-input');
+                const deleteBtn = flashcardDiv.querySelector('.delete-flashcard');
+
+                frontInput.addEventListener('change', () => {
+                    generatedFlashcards[index][0] = frontInput.value;
+                });
+
+                backInput.addEventListener('change', () => {
+                    generatedFlashcards[index][1] = backInput.value;
+                });
+
+                deleteBtn.addEventListener('click', () => {
+                    generatedFlashcards.splice(index, 1);
+                    renderFlashcards();
+                });
+
+                flashcardsList.appendChild(flashcardDiv);
+            });
+        }
+
+        // Add Flashcard Button
+        document.getElementById('addFlashcardBtn').addEventListener('click', () => {
+            generatedFlashcards.push(['New Front', 'New Back']);
+            renderFlashcards();
+        });
+
+        // Export Button
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const exportFormat = document.getElementById('exportFormat').value;
+            const resultMessage = document.getElementById('resultMessage');
+
+            fetch('/export', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    flashcards: generatedFlashcards,
+                    exportFormat: exportFormat
+                })
+            })
+            .then(response => {
+                // Log the raw response for debugging
+                console.log('Raw response:', response);
+                return response.json();
+            })
+            .then(data => {
+                // Log the parsed data for debugging
+                console.log('Parsed data:', data);
+
+                if (data.error) {
+                    resultMessage.innerHTML = `<p class="text-red-500">${data.error}</p>`;
+                } else {
+                    let message = 'Flashcards exported successfully! ';
+                    if (data.sheetsUrl) {
+                        message += `<a href="${data.sheetsUrl}" target="_blank" class="text-blue-500 underline">View Google Sheet</a> `;
+                    }
+                    if (data.ankiFilePath) {
+                        message += `Anki file saved at: ${data.ankiFilePath}`;
+                    }
+                    resultMessage.innerHTML = message;
+                }
+            })
+            .catch(error => {
+                // Log the full error for debugging
+                console.error('Full error:', error);
+
+                resultMessage.innerHTML = `<p class="text-red-500">An error occurred: ${error}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+flask==3.1.0
+google-api-python-client
+requests
+python-dotenv
+google-generativeai
+tabulate
+absl-py
+beautifulsoup4
+youtube-transcript-api
+gspread
+oauth2client
+google-auth-httplib2
+google-auth-oauthlib
