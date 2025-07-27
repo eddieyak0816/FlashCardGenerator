@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+[CREDENTIALS - DO NOT TRACK]
+gen-lang-client-0392817992-a1ea34dfff26.json
+gen-lang-client-0392817992-f68d244c1c50.json
+client_secret_89838497052-058nbfceraga2455n5jbnuj4hua8jpek.apps.googleusercontent.com.json
+.env
