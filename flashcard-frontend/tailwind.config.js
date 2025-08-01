@@ -1,0 +1,14 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./public/index.html",
+  ],
+  safelist: [
+    "bg-gray-100", "min-h-screen", "container", "mx-auto", "px-4", "py-8", "text-4xl", "font-bold", "text-center", "mb-2", "text-gray-600", "mb-8", "max-w-4xl", "bg-white", "rounded-lg", "shadow-md", "p-6", "mb-6", "block", "text-gray-700", "text-sm", "font-bold", "mb-2", "flex", "space-x-4", "flex-1", "px-4", "py-3", "bg-blue-500", "text-white", "rounded-lg", "hover:bg-blue-600", "focus:outline-none", "focus:ring", "transition", "duration-200", "block", "text-lg", "mb-1", "text-sm", "text-blue-100", "flex-1", "px-4", "py-3", "bg-green-500", "text-white", "rounded-lg", "hover:bg-green-600", "focus:outline-none", "focus:ring", "transition", "duration-200", "block", "text-lg", "mb-1", "text-sm", "text-green-100", "w-full", "px-3", "py-2", "border", "rounded-lg", "focus:outline-none", "focus:ring", "focus:border-blue-300", "w-full", "px-3", "py-2", "border", "rounded-lg", "focus:outline-none", "focus:ring", "focus:border-green-300", "w-full", "px-3", "py-2", "border", "rounded-lg", "focus:outline-none", "focus:ring", "w-full", "bg-purple-600", "text-white", "py-3", "rounded-lg", "hover:bg-purple-700", "focus:outline-none", "focus:ring", "transition", "duration-200"
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}

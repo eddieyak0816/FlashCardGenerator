@@ -110,22 +110,32 @@ def index():
 
 @app.route('/generate', methods=['POST'])
 def generate():
+
+    # Debug logging for incoming requests
+    print('--- /generate endpoint called ---')
+    print('Request method:', request.method)
+    print('Request headers:', dict(request.headers))
+    print('Request data:', request.data)
     try:
-        data = request.get_json()
-        input_type = data.get('input_type')
-        content = data.get('content')
-        export_format = data.get('export_format', 'sheets')
+        data = request.get_json(force=True, silent=True)
+        print('Parsed JSON:', data)
+        input_type = data.get('input_type') if data else None
+        content = data.get('content') if data else None
+        export_format = data.get('export_format', 'sheets') if data else 'sheets'
 
         if not content:
+            print('No content provided')
             return jsonify({'error': 'No content provided'}), 400
 
         # Get transcript if URL provided
         if input_type == 'url':
             video_id = extract_video_id(content)
             if not video_id:
+                print('Invalid YouTube URL')
                 return jsonify({'error': 'Invalid YouTube URL'}), 400
             content = fetch_transcript(video_id)
             if not content:
+                print('Could not fetch video transcript')
                 return jsonify({'error': 'Could not fetch video transcript'}), 400
 
         # Generate flashcards
